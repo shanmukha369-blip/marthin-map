@@ -1,1 +1,974 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MARS EXPLORER — Astronaut Mission Intelligence & Safety System</title>
+  <meta name="description" content="Professional astronaut Mars exploration, GIS planetary mapping, navigation, environmental intelligence, oxygen life support, and safety command platform.">
 
+  <!-- Futuristic Aerospace Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Core Aerospace CSS (Loads from root or css/ directory) -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/hud-mode.css">
+  <link rel="stylesheet" href="css/rtl.css">
+</head>
+<body>
+
+  <!-- Top Aerospace Command Header -->
+  <header class="app-header flex-between">
+    <div class="brand-section">
+      <div class="brand-logo-icon" aria-hidden="true"></div>
+      <div class="brand-title-wrap">
+        <div class="brand-title">MARS <span>EXPLORER</span></div>
+        <div class="brand-subtitle" data-i18n="appSubtitle">Astronaut Mission Intelligence & Safety System</div>
+      </div>
+    </div>
+
+    <!-- Live Mission Clocks Strip -->
+    <div class="header-clocks-strip">
+      <div class="clock-badge">
+        <span class="clock-label" data-i18n="metrics.sol">Martian Sol</span>
+        <span class="clock-val" id="hud-sol-counter">SOL 142</span>
+      </div>
+      <div class="clock-badge">
+        <span class="clock-label" data-i18n="metrics.met">MET Clock</span>
+        <span class="clock-val" id="hud-met-clock">142d 08h 24m 12s</span>
+      </div>
+      <div class="clock-badge">
+        <span class="clock-label" data-i18n="metrics.lmst">Local Solar Time</span>
+        <span class="clock-val" id="hud-lmst-clock">14:32:05 LMST</span>
+      </div>
+      <div class="clock-badge">
+        <span class="clock-label" data-i18n="metrics.earthDelay">Earth Latency</span>
+        <span class="clock-val">14m 22s</span>
+      </div>
+      <div id="global-network-badge" class="status-pill status-online" data-i18n="status.online">ONLINE</div>
+    </div>
+
+    <!-- Quick Action Controls -->
+    <div class="header-controls">
+      <button id="btn-start-guided-tour" class="btn btn-cyan btn-sm">
+        ★ RUN GUIDED DEMO
+      </button>
+      <button id="btn-global-trigger-sos" class="btn btn-danger btn-sm" data-i18n="buttons.triggerSos">
+        🚨 SOS BEACON
+      </button>
+      <select id="global-lang-select" class="select-control" aria-label="Select Mission Language">
+        <!-- 14 languages injected by JS -->
+      </select>
+      <button id="btn-toggle-hud-mode" class="btn btn-outline btn-sm" title="High-Contrast Spacesuit HUD">
+        HUD
+      </button>
+      <button id="btn-toggle-sound" class="btn btn-outline btn-sm" title="Procedural Audio Synthesizer">
+        🔊 AUDIO ON
+      </button>
+    </div>
+  </header>
+
+  <!-- Active Emergency Top Banner (Hidden by default) -->
+  <div id="active-emergency-banner" class="emergency-banner-alert hidden">
+    <div class="flex items-center gap-2">
+      <span style="font-size: 1.4rem;">⚠️</span>
+      <div>
+        <strong id="emergency-banner-code">EMERG-01-O2</strong>: <span id="emergency-banner-type">CRITICAL DISTRESS SIGNAL ACTIVE</span>
+        <div class="text-xs" id="emergency-banner-loc">Location: Jezero Crater | Beacon Transmitting via Mars Relay</div>
+      </div>
+    </div>
+    <div class="flex gap-1">
+      <button id="btn-view-emergency-detail" class="btn btn-sm btn-outline" style="border-color: #fff; color: #fff;">VIEW INCIDENT</button>
+      <button id="btn-clear-active-emergency" class="btn btn-sm btn-primary">STAND DOWN (RESOLVE)</button>
+    </div>
+  </div>
+
+  <!-- Master App Layout (Sidebar + Main Content Area) -->
+  <div class="app-layout">
+
+    <!-- Sidebar Navigation -->
+    <nav class="app-sidebar" aria-label="Mission Navigation">
+      <ul class="sidebar-nav-list">
+        <li>
+          <a href="#overview" class="nav-link active" data-view="overview">
+            <span class="nav-link-icon">🛰️</span>
+            <span data-i18n="nav.overview">Mission Deck</span>
+          </a>
+        </li>
+        <li>
+          <a href="#map" class="nav-link" data-view="map">
+            <span class="nav-link-icon">🪐</span>
+            <span data-i18n="nav.map">Mars Explorer 3D</span>
+          </a>
+        </li>
+        <li>
+          <a href="#navigation" class="nav-link" data-view="navigation">
+            <span class="nav-link-icon">🧭</span>
+            <span data-i18n="nav.navigation">Route Planner</span>
+          </a>
+        </li>
+        <li>
+          <a href="#environment" class="nav-link" data-view="environment">
+            <span class="nav-link-icon">🌡️</span>
+            <span data-i18n="nav.environment">Environmental Intel</span>
+          </a>
+        </li>
+        <li>
+          <a href="#lifesupport" class="nav-link" data-view="lifesupport">
+            <span class="nav-link-icon">🫁</span>
+            <span data-i18n="nav.lifesupport">Life Support & O2</span>
+          </a>
+        </li>
+        <li>
+          <a href="#health" class="nav-link" data-view="health">
+            <span class="nav-link-icon">🩺</span>
+            <span data-i18n="nav.health">Crew Health</span>
+          </a>
+        </li>
+        <li>
+          <a href="#hazards" class="nav-link" data-view="hazards">
+            <span class="nav-link-icon">⚠️</span>
+            <span data-i18n="nav.hazards">Hazard Matrix</span>
+          </a>
+        </li>
+        <li>
+          <a href="#comms" class="nav-link" data-view="comms">
+            <span class="nav-link-icon">📻</span>
+            <span data-i18n="nav.comms">Comms & Phrasebook</span>
+          </a>
+        </li>
+        <li>
+          <a href="#marsAi" class="nav-link" data-view="marsAi">
+            <span class="nav-link-icon">🤖</span>
+            <span data-i18n="nav.marsAi">MARS AI Assistant</span>
+          </a>
+        </li>
+        <li>
+          <a href="#emergency" class="nav-link" data-view="emergency">
+            <span class="nav-link-icon">🚨</span>
+            <span data-i18n="nav.emergency">Emergency SOS</span>
+          </a>
+        </li>
+        <li>
+          <a href="#reports" class="nav-link" data-view="reports">
+            <span class="nav-link-icon">📋</span>
+            <span data-i18n="nav.reports">Mission Reports</span>
+          </a>
+        </li>
+        <li>
+          <a href="#settings" class="nav-link" data-view="settings">
+            <span class="nav-link-icon">⚙️</span>
+            <span data-i18n="nav.settings">Settings & HUD</span>
+          </a>
+        </li>
+      </ul>
+
+      <div style="margin-top: auto; padding: 1rem 1.25rem; border-top: 1px solid var(--bg-panel-border);">
+        <div class="text-xs text-muted" style="letter-spacing: 0.05em;">ARES-VII MISSION ID</div>
+        <div class="font-mono text-sm text-cyan">ARES-7-EXP-2026</div>
+        <div id="app-tagline-text" class="text-xs text-muted mt-1" style="line-height: 1.3;">
+          Explore Mars. Navigate Safely. Protect Every Astronaut.
+        </div>
+      </div>
+    </nav>
+
+    <!-- Content Views -->
+    <main class="app-content">
+
+      <!-- VIEW 1: MISSION OVERVIEW (COMMAND DECK) -->
+      <section id="view-overview" class="view-section active-view">
+        <!-- Top Hero Mission Card -->
+        <div class="panel mb-2" style="background: linear-gradient(135deg, rgba(13, 20, 36, 0.95), rgba(194, 65, 12, 0.15)); border-color: rgba(255, 87, 34, 0.3);">
+          <div class="flex-between">
+            <div>
+              <span class="badge badge-accent">ARES-VII EXPEDITION</span>
+              <h2 style="font-size: 1.6rem; margin-top: 0.3rem;">MISSION COMMAND DECK</h2>
+              <p class="text-secondary text-sm">Astronaut Mission Intelligence, Planetary GIS & Automated Safety Monitoring</p>
+            </div>
+            <div class="flex gap-1">
+              <button class="btn btn-primary btn-sm" onclick="app.switchView('map')">OPEN MARS MAP</button>
+              <button class="btn btn-outline btn-sm" onclick="app.switchView('navigation')">PLAN TRAVERSE</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Telemetry Stat Grid -->
+        <div class="telemetry-grid">
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Current Focal Location</span>
+              <span class="badge badge-success">LANDING SITE</span>
+            </div>
+            <div class="stat-value text-cyan" id="ov-selected-location-name" style="font-size: 1.25rem;">Jezero Crater</div>
+            <div class="stat-subtext">
+              <span id="ov-selected-location-coords">18.38° N, 77.58° E</span>
+              <span class="text-muted">|</span>
+              <span id="ov-selected-location-elevation">-2,500m MOLA</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Life Support O2</span>
+              <span class="badge badge-success" id="ov-o2-status-badge">NOMINAL</span>
+            </div>
+            <div class="stat-value text-orange" id="ov-o2-reserve-val">88%</div>
+            <div class="stat-subtext">
+              <span id="ov-o2-hours-val">6.8h remain</span>
+              <span class="text-muted">| 1.2 L/min rate</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Commander Vitals</span>
+              <span class="badge badge-success" id="ov-health-status-val">NOMINAL</span>
+            </div>
+            <div class="stat-value text-cyan" id="ov-health-hr-val">74 BPM</div>
+            <div class="stat-subtext">SpO2 98.4% | BP 118/76</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Surface Atmosphere</span>
+              <span class="badge badge-caution">VACUUM</span>
+            </div>
+            <div class="stat-value" style="font-size: 1.35rem;">-63.4°C</div>
+            <div class="stat-subtext">612 Pa (0.6% Earth) | Tau 0.42</div>
+          </div>
+        </div>
+
+        <!-- Overview Map Preview & Timeline -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+          <div class="panel">
+            <div class="panel-header">
+              <h3 class="panel-title">🪐 Planetary Focal Target</h3>
+              <button class="btn btn-outline btn-sm" onclick="app.switchView('map')">EXPAND FULL MAP</button>
+            </div>
+            <div style="height: 300px; background: #02040a; border-radius: 4px; overflow: hidden; position: relative;">
+              <canvas id="mini-mars-canvas" style="width: 100%; height: 100%;"></canvas>
+            </div>
+            <div class="text-xs text-muted mt-1">
+              Drag to inspect Martian surface. Click location markers to center coordinate targeting.
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h3 class="panel-title">🛰️ Deep Space Network & Systems</h3>
+              <span class="badge badge-success">LINK NOMINAL</span>
+            </div>
+            <div class="flex-col gap-2">
+              <div class="flex-between" style="padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <span class="text-sm">Earth-Mars One-Way Latency</span>
+                <span class="font-mono text-cyan">14m 22s (Goldstone DSN)</span>
+              </div>
+              <div class="flex-between" style="padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <span class="text-sm">Orbital Relay Pass</span>
+                <span class="font-mono text-orange">MRO (Elev 62° Elevation)</span>
+              </div>
+              <div class="flex-between" style="padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <span class="text-sm">Active Exploration Rover</span>
+                <span class="font-mono text-cyan">ARES Pressurized Rover #1</span>
+              </div>
+              <div class="flex-between" style="padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <span class="text-sm">Odometer Traversed</span>
+                <span class="font-mono">184.6 km total</span>
+              </div>
+              <div class="flex-between" style="padding: 0.5rem 0;">
+                <span class="text-sm">Kilopower Nuclear Hab Generator</span>
+                <span class="font-mono text-cyan">14.8 kW (Output 100%)</span>
+              </div>
+            </div>
+
+            <div class="mt-2 flex gap-1">
+              <button class="btn btn-primary btn-sm" onclick="app.switchView('emergency')">EMERGENCY SOS CENTER</button>
+              <button class="btn btn-outline btn-sm" onclick="app.switchView('marsAi')">ASK MARS AI</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: MARS EXPLORER (3D & 2D GIS MAP) -->
+      <section id="view-map" class="view-section hidden">
+        <div class="panel">
+          <div class="panel-header">
+            <h3 class="panel-title">🪐 Interactive Mars Planetary Explorer</h3>
+            <div class="flex items-center gap-1">
+              <input type="text" id="map-search-landmark" class="select-control" placeholder="Search landmark (e.g. Jezero, Olympus)..." style="width: 260px;">
+              <button id="btn-toggle-map-mode" class="btn btn-cyan btn-sm">SWITCH TO 2D TOPO MAP</button>
+              <button id="btn-toggle-autorotate" class="btn btn-outline btn-sm">PAUSE ROTATION</button>
+              <button id="btn-measure-tool" class="btn btn-outline btn-sm">MEASURE DISTANCE</button>
+            </div>
+          </div>
+
+          <div class="map-canvas-container">
+            <!-- 3D Globe Wrapper -->
+            <div id="map-3d-wrapper" style="width: 100%; height: 100%;">
+              <canvas id="mars-globe-canvas"></canvas>
+            </div>
+
+            <!-- 2D Map Wrapper (Hidden by default) -->
+            <div id="map-2d-wrapper" class="hidden" style="width: 100%; height: 100%;">
+              <canvas id="mars-map-canvas"></canvas>
+            </div>
+
+            <!-- Coordinate HUD Overlay -->
+            <div class="map-overlay-hud">
+              <div>CURSOR: <span id="map-cursor-coords">18.38° N, 77.58° E</span></div>
+              <div>DATUM: MOLA TOPOGRAPHY</div>
+            </div>
+
+            <!-- Sliding Location Intel Drawer -->
+            <div id="location-intel-drawer" class="location-drawer hidden">
+              <div class="flex-between mb-1">
+                <span class="badge badge-accent" id="loc-intel-feature">IMPACT CRATER</span>
+                <button id="btn-close-location-drawer" class="btn btn-sm btn-outline" style="padding: 0.15rem 0.4rem;">✕</button>
+              </div>
+              <h3 id="loc-intel-title" style="font-size: 1.25rem;">Jezero Crater</h3>
+              <div class="text-xs text-muted mb-1" id="loc-intel-coords">18.38° N, 77.58° E</div>
+
+              <div class="intel-img-frame">
+                <img id="loc-intel-img" src="" alt="NASA Mars Imagery">
+              </div>
+              <div class="text-xs text-muted mb-2" id="loc-intel-img-caption">
+                NASA Perseverance Mastcam-Z panorama
+              </div>
+
+              <div class="flex-col gap-1 mb-2">
+                <div class="flex-between text-xs">
+                  <span class="text-muted">MOLA Elevation:</span>
+                  <strong id="loc-intel-elev" class="text-cyan">-2,500m</strong>
+                </div>
+                <div class="flex-between text-xs">
+                  <span class="text-muted">Associated Mission:</span>
+                  <strong id="loc-intel-mission">NASA Mars 2020</strong>
+                </div>
+              </div>
+
+              <p class="text-xs text-secondary mb-2" id="loc-intel-desc">
+                Ancient open-basin lake fed by an inflow river channel creating a fan-delta rich in clay minerals.
+              </p>
+
+              <div class="mb-2">
+                <div class="text-xs text-muted mb-1" style="font-weight: 700;">TERRAIN RISKS & HAZARDS:</div>
+                <ul id="loc-intel-hazards" style="list-style: none; font-size: 0.75rem;"></ul>
+              </div>
+
+              <div class="flex-col gap-1">
+                <div class="flex gap-1">
+                  <button id="btn-set-loc-start" class="btn btn-sm btn-outline flex-1">START POINT</button>
+                  <button id="btn-set-loc-dest" class="btn btn-sm btn-outline flex-1">DESTINATION</button>
+                </div>
+                <button id="btn-route-from-intel" class="btn btn-sm btn-primary">PLAN TRAVERSE ROUTE</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: ROUTE PLANNER (NAVIGATION) -->
+      <section id="view-navigation" class="view-section hidden">
+        <div class="panel mb-2">
+          <div class="panel-header">
+            <h3 class="panel-title">🧭 Smart Mars Navigation & Geodesic Route Planning</h3>
+            <button id="btn-save-current-route" class="btn btn-cyan btn-sm">💾 SAVE MISSION ROUTE</button>
+          </div>
+
+          <!-- Endpoints and Mode selector -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;" class="mb-2">
+            <div>
+              <label class="text-xs text-muted">STARTING LOCATION</label>
+              <select id="nav-start-select" class="select-control" style="width: 100%; margin-top: 0.3rem;"></select>
+            </div>
+            <div>
+              <label class="text-xs text-muted">DESTINATION LOCATION</label>
+              <select id="nav-dest-select" class="select-control" style="width: 100%; margin-top: 0.3rem;"></select>
+            </div>
+            <div>
+              <label class="text-xs text-muted">TRAVEL MODE</label>
+              <select id="nav-mode-select" class="select-control" style="width: 100%; margin-top: 0.3rem;">
+                <option value="pressurized_rover">Pressurized Heavy Rover (12.0 km/h)</option>
+                <option value="light_rover">Unpressurized Light Rover (8.0 km/h)</option>
+                <option value="eva_walk">Spacesuit EVA Walking (3.2 km/h)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Calculated Metrics Strip -->
+          <div class="telemetry-grid">
+            <div class="stat-card">
+              <span class="stat-label">Traversable Distance</span>
+              <div class="stat-value text-cyan" id="nav-traversable-dist">-- km</div>
+              <div class="stat-subtext" id="nav-direct-dist">-- km (Geodesic)</div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Estimated Travel Time</span>
+              <div class="stat-value text-orange" id="nav-est-time">-- hrs</div>
+              <div class="stat-subtext">At configured mode speed</div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Initial Azimuth</span>
+              <div class="stat-value text-cyan" id="nav-bearing">--°</div>
+              <div class="stat-subtext">Bearing from true Martian North</div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Average Slope Incline</span>
+              <div class="stat-value" id="nav-avg-slope">--°</div>
+              <div class="stat-subtext text-muted" id="nav-confidence-score">Confidence 94%</div>
+            </div>
+          </div>
+
+          <!-- Elevation Profile Canvas -->
+          <div class="mb-2">
+            <div class="flex-between mb-1">
+              <span class="text-xs text-muted font-mono">TERRAIN ELEVATION PROFILE (MOLA METERS)</span>
+              <span class="badge badge-accent">NASA MOLA STEREO VERIFIED</span>
+            </div>
+            <div style="height: 140px; background: rgba(5, 8, 17, 0.7); border-radius: 4px; border: 1px solid rgba(255,255,255,0.08); overflow: hidden;">
+              <canvas id="nav-elev-canvas" style="width: 100%; height: 100%;"></canvas>
+            </div>
+          </div>
+
+          <!-- Route Comparison Matrix -->
+          <div class="mb-2">
+            <div class="text-sm text-cyan mb-1" style="font-weight: 700;">ROUTE TRAVERSE COMPARISON</div>
+            <table class="mars-table">
+              <thead>
+                <tr>
+                  <th>Route Profile</th>
+                  <th>Distance</th>
+                  <th>Duration</th>
+                  <th>Avg Slope</th>
+                  <th>Risk Rating</th>
+                  <th>Oxygen Budget</th>
+                </tr>
+              </thead>
+              <tbody id="nav-comparison-table-body"></tbody>
+            </table>
+          </div>
+
+          <!-- Waypoints Table -->
+          <div>
+            <div class="text-sm text-cyan mb-1" style="font-weight: 700;">PLOTTED WAYPOINTS</div>
+            <table class="mars-table">
+              <thead>
+                <tr>
+                  <th>Node</th>
+                  <th>Coordinates</th>
+                  <th>Elevation</th>
+                  <th>Dist from Start</th>
+                </tr>
+              </thead>
+              <tbody id="nav-waypoints-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 4: ENVIRONMENTAL INTEL (WEATHER & ATMOSPHERE) -->
+      <section id="view-environment" class="view-section hidden">
+        <div class="panel mb-2">
+          <div class="panel-header">
+            <h3 class="panel-title">🌡️ Martian Atmospheric & Environmental Intelligence</h3>
+            <span class="badge badge-success">DATA FEED: MEDA + MRO MCS</span>
+          </div>
+
+          <div class="telemetry-grid">
+            <div class="stat-card">
+              <span class="stat-label">Surface Temperature</span>
+              <div class="stat-value text-orange">-63.4°C</div>
+              <div class="stat-subtext">Min: -94.2°C | Max: -14.8°C</div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Atmospheric Pressure</span>
+              <div class="stat-value text-cyan">612 Pa</div>
+              <div class="stat-subtext">6.12 mbar (0.6% Earth Sea-Level)</div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Dust Optical Depth</span>
+              <div class="stat-value">Tau 0.42</div>
+              <div class="stat-subtext badge-success badge">CLEAR OPTICAL DEPTH</div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Galactic Radiation Flux</span>
+              <div class="stat-value text-orange">28.4 μSv/h</div>
+              <div class="stat-subtext">MSL RAD Surface Baseline</div>
+            </div>
+          </div>
+
+          <!-- Charts Grid -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;" class="mb-2">
+            <div>
+              <div class="flex-between mb-1">
+                <span class="text-xs text-muted font-mono">DIURNAL TEMPERATURE CYCLE (24-SOL HOURS)</span>
+                <span class="badge badge-accent">MODEL ESTIMATE</span>
+              </div>
+              <div style="height: 160px; background: rgba(5, 8, 17, 0.7); border-radius: 4px; border: 1px solid rgba(255,255,255,0.08); overflow: hidden;">
+                <canvas id="env-temp-chart" style="width: 100%; height: 100%;"></canvas>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex-between mb-1">
+                <span class="text-xs text-muted font-mono">ATMOSPHERIC COMPOSITION (UNBREATHABLE)</span>
+                <span class="badge badge-accent">SCIENTIFIC REFERENCE</span>
+              </div>
+              <div style="height: 160px; background: rgba(5, 8, 17, 0.7); border-radius: 4px; border: 1px solid rgba(255,255,255,0.08); overflow: hidden;">
+                <canvas id="env-donut-chart" style="width: 100%; height: 100%;"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scientific Explanations Panel -->
+          <div class="panel" style="background: rgba(10, 15, 29, 0.6);">
+            <h4 class="text-sm text-cyan mb-1">SCIENTIFIC EXPLANATIONS FOR ASTRONAUT CREW</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+              <div class="text-xs text-secondary">
+                <strong class="text-orange">[THIN ATMOSPHERE]</strong> Mars atmospheric pressure (0.61 kPa) is 160 times thinner than Earth (101.3 kPa). Lungs cannot absorb oxygen without mechanical pressurization.
+              </div>
+              <div class="text-xs text-secondary">
+                <strong class="text-orange">[EBULLISM DANGER]</strong> Body temperature (37°C) exceeds the boiling point of unpressurized water on Mars. Unprotected crew face instant bodily fluid boiling.
+              </div>
+              <div class="text-xs text-secondary">
+                <strong class="text-orange">[RADIATION EXPOSURE]</strong> Mars lacks a protective global dipole magnetosphere. Galactic cosmic rays (GCR) deliver ~0.68 mSv/day, requiring shielded habitat shelters.
+              </div>
+              <div class="text-xs text-secondary">
+                <strong class="text-orange">[DUST STORMS]</strong> Electrostatic dust storms can expand globally within days, attenuating sunlight by 99% and eroding suit optical seals.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 5: LIFE SUPPORT & OXYGEN -->
+      <section id="view-lifesupport" class="view-section hidden">
+        <div class="panel mb-2">
+          <div class="panel-header">
+            <h3 class="panel-title">🫁 Astronaut Oxygen & Life Support Management</h3>
+            <span id="o2-safety-status-badge" class="badge badge-success">NOMINAL</span>
+          </div>
+
+          <!-- Tank Progress -->
+          <div class="mb-2">
+            <div class="flex-between">
+              <span class="text-sm">PLSS & Rover Oxygen Tank Reserve</span>
+              <strong id="o2-current-tank-liters" class="font-mono text-cyan">1450 L (88%)</strong>
+            </div>
+            <div class="progress-bar-wrap">
+              <div id="o2-tank-fill-bar" class="progress-bar status-safe" style="width: 88%;"></div>
+            </div>
+            <div class="flex-between text-xs text-muted">
+              <span>0 L (Depleted)</span>
+              <span>Capacity: 1,650 L STP</span>
+            </div>
+          </div>
+
+          <!-- Input Parameters -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;" class="mb-2">
+            <div>
+              <label class="text-xs text-muted">CURRENT TANK (LITERS)</label>
+              <input type="number" id="input-o2-tank" class="select-control" value="1450" style="width: 100%; margin-top: 0.3rem;">
+            </div>
+            <div>
+              <label class="text-xs text-muted">METABOLIC WORKLOAD RATE</label>
+              <select id="input-o2-burn-rate" class="select-control" style="width: 100%; margin-top: 0.3rem;">
+                <option value="0.6">Rest / Sleep (0.6 L/min)</option>
+                <option value="1.2" selected>Nominal EVA Activity (1.2 L/min)</option>
+                <option value="2.1">High Exertion / Drilling (2.1 L/min)</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-muted">PLANNED EVA DURATION (HRS)</label>
+              <input type="number" id="input-o2-duration" class="select-control" value="3.5" step="0.5" style="width: 100%; margin-top: 0.3rem;">
+            </div>
+            <div>
+              <label class="text-xs text-muted">RETURN TREK TIME (HRS)</label>
+              <input type="number" id="input-o2-return" class="select-control" value="1.0" step="0.25" style="width: 100%; margin-top: 0.3rem;">
+            </div>
+            <div>
+              <label class="text-xs text-muted">SAFETY RESERVE BUFFER (%)</label>
+              <input type="number" id="input-o2-reserve-pct" class="select-control" value="25" min="5" max="50" style="width: 100%; margin-top: 0.3rem;">
+            </div>
+          </div>
+
+          <!-- Calculated Budget Results -->
+          <div class="telemetry-grid">
+            <div class="stat-card">
+              <span class="stat-label">Total Mission O2 Required</span>
+              <div class="stat-value text-orange" id="o2-total-required-liters">-- L</div>
+              <div class="stat-subtext">Includes 120L Emergency Bottle</div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Remaining After EVA</span>
+              <div class="stat-value text-cyan" id="o2-remaining-after-eva">-- L</div>
+              <div class="stat-subtext">Post-mission tank reserve</div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Point of No Return</span>
+              <div class="stat-value" id="o2-point-of-no-return">-- hrs</div>
+              <div class="stat-subtext">Mandatory abort threshold</div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Operational Hours Left</span>
+              <div class="stat-value text-cyan" id="o2-hours-remaining-rate">-- hrs</div>
+              <div class="stat-subtext">At active consumption rate</div>
+            </div>
+          </div>
+
+          <!-- Real-Time Simulation Clock Controls -->
+          <div class="panel" style="background: rgba(10, 15, 29, 0.7);">
+            <div class="flex-between">
+              <div>
+                <h4 class="text-sm">⏱️ Interactive Life Support Drain Simulator</h4>
+                <p class="text-xs text-muted">Simulate real-time oxygen depletion clock to verify spacesuit telemetry warnings.</p>
+              </div>
+              <div class="flex items-center gap-1">
+                <select id="select-o2-sim-speed" class="select-control">
+                  <option value="1">1x Real-Time</option>
+                  <option value="10">10x Accelerated</option>
+                  <option value="60">60x Fast Forward</option>
+                </select>
+                <button id="btn-o2-sim-start" class="btn btn-cyan btn-sm">START DRAIN</button>
+                <button id="btn-o2-sim-pause" class="btn btn-outline btn-sm">PAUSE</button>
+                <button id="btn-o2-sim-reset" class="btn btn-outline btn-sm">RESET TANK</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 6: CREW HEALTH -->
+      <section id="view-health" class="view-section hidden">
+        <div class="panel mb-2">
+          <div class="panel-header">
+            <h3 class="panel-title">🩺 Astronaut Health & Physiological Telemetry</h3>
+            <div class="flex items-center gap-1">
+              <select id="health-crew-select" class="select-control"></select>
+              <span id="health-status-badge" class="badge badge-success">NOMINAL</span>
+            </div>
+          </div>
+
+          <!-- Biometrics Vitals Grid -->
+          <div class="telemetry-grid">
+            <div class="stat-card">
+              <span class="stat-label">Heart Rate</span>
+              <div class="stat-value text-cyan" id="health-hr-val">74 BPM</div>
+              <div class="stat-subtext">Resting Baseline: 70-80</div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Blood Pressure</span>
+              <div class="stat-value" id="health-bp-val">118/76 mmHg</div>
+              <div class="stat-subtext">Non-invasive arterial cuff</div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Oxygen Saturation SpO2</span>
+              <div class="stat-value text-cyan" id="health-spo2-val">98.4%</div>
+              <div class="stat-subtext">Pulse Oximetry Telemetry</div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Core Body Temp</span>
+              <div class="stat-value" id="health-temp-val">37.0°C</div>
+              <div class="stat-subtext">Active Liquid Cooling Garment</div>
+            </div>
+          </div>
+
+          <!-- Dynamic Real-Time ECG Waveform Canvas -->
+          <div class="mb-2">
+            <div class="flex-between mb-1">
+              <span class="text-xs font-mono text-cyan">LIVE CARDIAC ELECTROCARDIOGRAM (LEAD II ECG)</span>
+              <span class="badge badge-success">ACTIVE BIOSENSOR MESH</span>
+            </div>
+            <div style="height: 120px; background: rgba(5, 8, 17, 0.9); border: 1px solid var(--bg-panel-border); border-radius: 4px; overflow: hidden;">
+              <canvas id="ecg-canvas" style="width: 100%; height: 100%;"></canvas>
+            </div>
+          </div>
+
+          <!-- Health Simulation Controls -->
+          <div class="flex items-center gap-1 mb-2">
+            <span class="text-xs text-muted" style="margin-right: 0.5rem;">SIMULATE VITALS:</span>
+            <button id="btn-sim-exertion" class="btn btn-sm btn-outline">ELEVATED EXERTION</button>
+            <button id="btn-sim-hypoxia" class="btn btn-sm btn-outline text-orange">HYPOXIA WARNING</button>
+            <button id="btn-sim-reset" class="btn btn-sm btn-primary">RESET NOMINAL</button>
+          </div>
+
+          <!-- Medical Event Logs -->
+          <div>
+            <div class="text-sm text-cyan mb-1" style="font-weight: 700;">MEDICAL EVENT & DOSIMETRY LOGS</div>
+            <div id="health-medical-logs-list" class="flex-col gap-1"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 7: HAZARD INTELLIGENCE -->
+      <section id="view-hazards" class="view-section hidden">
+        <div class="panel">
+          <div class="panel-header">
+            <h3 class="panel-title">⚠️ Martian Hazard Intelligence & Planetary Risk Matrix</h3>
+            <div class="flex items-center gap-1">
+              <button class="hazard-filter-chip active" data-severity="ALL">ALL (10)</button>
+              <button class="hazard-filter-chip" data-severity="RED">CRITICAL</button>
+              <button class="hazard-filter-chip" data-severity="ORANGE">HIGH CONCERN</button>
+              <button class="hazard-filter-chip" data-severity="YELLOW">CAUTION</button>
+            </div>
+          </div>
+
+          <div id="hazards-grid-container" class="hazards-grid"></div>
+        </div>
+      </section>
+
+      <!-- VIEW 8: COMMS & PHRASEBOOK -->
+      <section id="view-comms" class="view-section hidden">
+        <div class="panel mb-2">
+          <div class="panel-header">
+            <h3 class="panel-title">📻 Multilingual Astronaut Radio & Phrasebook</h3>
+            <span class="badge badge-accent">14 LANGUAGES SUPPORTED</span>
+          </div>
+
+          <div class="telemetry-grid">
+            <div class="stat-card">
+              <span class="stat-label">Earth-Mars Signal Delay</span>
+              <div class="stat-value text-cyan">14m 22s</div>
+              <div class="stat-subtext">Deep Space Network Goldstone 70m</div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Orbital Relay UHF</span>
+              <div class="stat-value text-orange">2.048 Mbps</div>
+              <div class="stat-subtext">Mars Reconnaissance Orbiter</div>
+            </div>
+          </div>
+
+          <p class="text-xs text-secondary mb-2">
+            Instant mission phrasebook with audio speech synthesis for international astronaut crews. Click AUDIO to listen via browser headset synthesizer.
+          </p>
+
+          <div id="comms-phrasebook-list" class="phrasebook-grid"></div>
+        </div>
+      </section>
+
+      <!-- VIEW 9: MARS AI ASSISTANT -->
+      <section id="view-marsAi" class="view-section hidden">
+        <div class="panel">
+          <div class="panel-header">
+            <h3 class="panel-title">🤖 MARS AI — Mission Intelligence Assistant</h3>
+            <span class="badge badge-accent">ONBOARD SYNTHETIC INTELLIGENCE</span>
+          </div>
+
+          <div class="ai-console-wrapper">
+            <div id="ai-chat-messages" class="ai-messages-pane">
+              <div class="ai-msg ai-msg-ai">
+                <div class="msg-bubble">
+                  <div class="ai-source-badge">MARS AI TELEMETRY ENGINE</div>
+                  <div>Welcome, Astronaut. I am MARS AI, your mission intelligence assistant. I am connected to the ARES-VII planetary telemetry bus, MOLA elevation datasets, and life-support models. Ask me anything regarding your exploration plan, oxygen margins, local terrain hazards, or mission procedures.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Prompt Chips -->
+            <div class="ai-prompt-chips">
+              <button class="ai-prompt-chip" data-prompt="What is the current selected location?">📍 Current Location</button>
+              <button class="ai-prompt-chip" data-prompt="Calculate oxygen requirements for 4.5 hour EVA">🫁 Oxygen Budget</button>
+              <button class="ai-prompt-chip" data-prompt="Explain the atmospheric conditions on Mars">🌡️ Atmospheric Intel</button>
+              <button class="ai-prompt-chip" data-prompt="What hazards are associated with Jezero Crater?">⚠️ Local Hazards</button>
+              <button class="ai-prompt-chip" data-prompt="Summarize astronaut health vitals">🩺 Crew Vitals</button>
+            </div>
+
+            <!-- Input Strip -->
+            <div class="ai-input-strip">
+              <input type="text" id="ai-chat-input" class="ai-input-field" placeholder="Ask MARS AI regarding telemetry, navigation, or safety procedures...">
+              <button id="btn-send-ai-message" class="btn btn-cyan btn-sm">SEND</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 10: EMERGENCY SOS -->
+      <section id="view-emergency" class="view-section hidden">
+        <div class="panel mb-2" style="border-color: rgba(239, 68, 68, 0.4);">
+          <div class="panel-header">
+            <h3 class="panel-title text-orange">🚨 Emergency Assistance & SOS Command Center</h3>
+            <span class="badge badge-danger">2-STAGE CONFIRMATION REQUIRED</span>
+          </div>
+
+          <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px; padding: 1.25rem;" class="mb-2">
+            <div class="flex-between">
+              <div>
+                <h4 style="font-size: 1.2rem; color: #fca5a5;">EMERGENCY DISTRESS BEACON</h4>
+                <p class="text-xs text-secondary mt-1">
+                  Broadcasting an SOS triggers automated distress telemetry across the UHF Mars Relay Network to orbital orbiters and base habitat. Audio alarm sirens will sound.
+                </p>
+              </div>
+              <button class="btn btn-danger" onclick="document.getElementById('modal-sos-confirm').classList.remove('hidden')">
+                🚨 ACTIVATE SOS BEACON
+              </button>
+            </div>
+          </div>
+
+          <!-- Emergency Action Checklists -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+            <div class="panel" style="background: rgba(10, 15, 29, 0.7);">
+              <h4 class="text-sm text-cyan mb-1">STANDARD EMERGENCY SOP CHECKLIST</h4>
+              <ol class="text-xs text-secondary" style="padding-left: 1.2rem; line-height: 1.8;">
+                <li><strong>LIFE SUPPORT:</strong> Check suit pressure (>29.6 kPa). If falling, engage secondary O2 bottle immediately.</li>
+                <li><strong>CREW LOCATION:</strong> Transmit exact GPS/MOLA coordinates: 18.38° N, 77.58° E.</li>
+                <li><strong>SHELTER PROTOCOL:</strong> If storm or SPE radiation flare, retreat into rover or regolith bunker within 15 minutes.</li>
+                <li><strong>RADIO PROTOCOL:</strong> Transmit MAYDAY on UHF Channel Alpha (401.5 MHz).</li>
+              </ol>
+            </div>
+
+            <div class="panel" style="background: rgba(10, 15, 29, 0.7);">
+              <h4 class="text-sm text-cyan mb-1">ACTIVE INCIDENT TELEMETRY PACKET</h4>
+              <div class="font-mono text-xs" style="background: #02040a; padding: 0.75rem; border-radius: 4px; color: #38bdf8; line-height: 1.6;">
+                DISTRESS_ID: NONE (STANDBY)<br>
+                BEACON_FREQ: 401.585 MHz UHF<br>
+                COORDINATES: 18.38° N, 77.58° E (MOLA -2500m)<br>
+                PLSS_PRESSURE: 29.6 kPa pure O2<br>
+                DSN_STATUS: GOLDSTONE UPLINK ACTIVE (14m 22s lag)
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 11: MISSION REPORTS -->
+      <section id="view-reports" class="view-section hidden">
+        <div class="panel mb-2">
+          <div class="panel-header">
+            <h3 class="panel-title">📋 Mission Reports & Data Dossiers</h3>
+            <div class="flex gap-1">
+              <button id="btn-export-csv-log" class="btn btn-cyan btn-sm">EXPORT CSV LOG</button>
+              <button id="btn-print-report" class="btn btn-outline btn-sm">PRINT MISSION DOSSIER</button>
+            </div>
+          </div>
+
+          <div class="mb-2">
+            <div class="text-sm text-cyan mb-1" style="font-weight: 700;">SOL-BY-SOL ACTIVITY LOG</div>
+            <table class="mars-table">
+              <thead>
+                <tr>
+                  <th>Sol</th>
+                  <th>LMST Time</th>
+                  <th>Location</th>
+                  <th>Activity Description</th>
+                  <th>Distance</th>
+                  <th>O2 Used</th>
+                  <th>Crew Status</th>
+                </tr>
+              </thead>
+              <tbody id="reports-table-body"></tbody>
+            </table>
+          </div>
+
+          <!-- Field Observation Notepad -->
+          <div class="panel" style="background: rgba(10, 15, 29, 0.7);">
+            <h4 class="text-sm text-cyan mb-1">📝 ASTRONAUT FIELD OBSERVATION LOGBOOK</h4>
+            <div class="flex gap-1 mb-2">
+              <input type="text" id="input-field-note-text" class="select-control flex-1" placeholder="Enter geological or operational field note with coordinates...">
+              <button id="btn-add-field-note" class="btn btn-primary btn-sm">RECORD NOTE</button>
+            </div>
+            <div id="reports-notes-list" class="flex-col gap-1"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 12: SETTINGS & HUD -->
+      <section id="view-settings" class="view-section hidden">
+        <div class="panel">
+          <div class="panel-header">
+            <h3 class="panel-title">⚙️ Mission Settings & Astronaut Accessibility</h3>
+            <span class="badge badge-accent">SYSTEM CONFIG</span>
+          </div>
+
+          <div style="max-width: 600px;" class="flex-col gap-2">
+            <div class="flex-between">
+              <div>
+                <strong>Astronaut High-Contrast HUD Mode</strong>
+                <div class="text-xs text-muted">Optimized for space helmet glare in direct solar radiation.</div>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="document.getElementById('btn-toggle-hud-mode').click()">TOGGLE HUD</button>
+            </div>
+
+            <div class="flex-between">
+              <div>
+                <strong>Audio Synthesizer Telemetry Alerts</strong>
+                <div class="text-xs text-muted">Procedural Web Audio chimes for clicks and emergency sirens.</div>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="document.getElementById('btn-toggle-sound').click()">TOGGLE AUDIO</button>
+            </div>
+
+            <div class="flex-between">
+              <div>
+                <strong>Mission Default Units</strong>
+                <div class="text-xs text-muted">Metric (Celsius, Kilometers, Pa, Liters). Standard NASA planetary science.</div>
+              </div>
+              <span class="badge badge-success">METRIC (SI)</span>
+            </div>
+
+            <div class="flex-between">
+              <div>
+                <strong>Active Data Cache & Storage</strong>
+                <div class="text-xs text-muted">NASA MOLA grids, imagery, and route notes cached for offline mission continuity.</div>
+              </div>
+              <span class="badge badge-success">LOCAL STORAGE ACTIVE</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODAL: 2-Step Emergency SOS Confirmation -->
+  <div id="modal-sos-confirm" class="modal-overlay hidden">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <strong style="color: #ef4444; font-size: 1.1rem;">⚠️ CONFIRM EMERGENCY SOS BROADCAST</strong>
+        <button id="btn-sos-cancel" class="btn btn-outline btn-sm">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-sm text-secondary mb-2" data-i18n="dialogs.sosConfirmText">
+          Broadcasting an SOS will alert base habitat, orbital relays, and initiate automated crew beacon localization. Are you in immediate life-threatening danger?
+        </p>
+        <div class="font-mono text-xs" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.75rem; border-radius: 4px; color: #fca5a5;">
+          BROADCASTING FROM: Current Coordinates<br>
+          TRANSMISSION: UHF Beacon 401.5 MHz<br>
+          EARTH SIGNAL LAG: ~14 minutes 22 seconds
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('modal-sos-confirm').classList.add('hidden')">CANCEL</button>
+        <button id="btn-sos-confirm-final" class="btn btn-danger btn-sm">CONFIRM DISTRESS BEACON</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Guided Tour Walkthrough -->
+  <div id="modal-guided-tour" class="modal-overlay hidden">
+    <div class="modal-dialog guided-tour-card">
+      <div class="modal-header">
+        <div class="flex items-center gap-1">
+          <span class="tour-step-badge" id="tour-step-number">1 / 8</span>
+          <strong id="tour-step-title" class="text-cyan">Open Mars 3D Planetary Map</strong>
+        </div>
+        <button id="btn-tour-close" class="btn btn-outline btn-sm">✕</button>
+      </div>
+      <div class="modal-body">
+        <p id="tour-step-desc" class="text-sm text-secondary">
+          Opening the interactive 3D Mars globe with MOLA topography, day/night lighting, and orbital reticles.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-tour-next" class="btn btn-cyan btn-sm">NEXT STEP ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Application Script: Supports both root app.js or js/app.js -->
+  <script type="module">
+    import('./app.js').catch(() => import('./js/app.js'));
+  </script>
+</body>
+</html>
